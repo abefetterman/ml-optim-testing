@@ -14,57 +14,63 @@ import torchvision.datasets as datasets
 
 import densenet as dn
 
+from sacred import Experiment
+ex = Experiment('DenseNet')
 # used for logging to TensorBoard
-from tensorboard_logger import configure, log_value
+# from tensorboard_logger import configure, log_value
 
-parser = argparse.ArgumentParser(description='PyTorch DenseNet Training')
-parser.add_argument('--epochs', default=300, type=int,
-                    help='number of total epochs to run')
-parser.add_argument('--start-epoch', default=0, type=int,
-                    help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=64, type=int,
-                    help='mini-batch size (default: 64)')
-parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
-                    help='initial learning rate')
-parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
-parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
-                    help='weight decay (default: 1e-4)')
-parser.add_argument('--print-freq', '-p', default=10, type=int,
-                    help='print frequency (default: 10)')
-parser.add_argument('--layers', default=100, type=int,
-                    help='total number of layers (default: 100)')
-parser.add_argument('--growth', default=12, type=int,
-                    help='number of new channels per layer (default: 12)')
-parser.add_argument('--droprate', default=0, type=float,
-                    help='dropout probability (default: 0.0)')
-parser.add_argument('--no-augment', dest='augment', action='store_false',
-                    help='whether to use standard augmentation (default: True)')
-parser.add_argument('--reduce', default=0.5, type=float,
-                    help='compression rate in transition stage (default: 0.5)')
-parser.add_argument('--no-bottleneck', dest='bottleneck', action='store_false',
-                    help='To not use bottleneck block')
-parser.add_argument('--resume', default='', type=str,
-                    help='path to latest checkpoint (default: none)')
-parser.add_argument('--name', default='DenseNet_BC_100_12', type=str,
-                    help='name of experiment')
-parser.add_argument('--tensorboard',
-                    help='Log progress to TensorBoard', action='store_true')
-parser.add_argument('--datadir', default='../data/', type=str,
-                    help='data directory')
-parser.set_defaults(bottleneck=True)
-parser.set_defaults(augment=True)
+class ConfigAsArgs:
+    def __init__(self, entries):
+        self.__dict__.update(entries)
 
-best_prec1 = 0
+@ex.config
+def config():
+    epochs = 300 #(int) number of total epochs to run
+    start_epoch = 0 #(int) manual epoch number (useful on restarts)
+    batch_size = 64 #(int) mini-batch size
+    lr = 0.1 #(float) initial learning rate
+    momentum = 0.9 #(float) momentum
+    weight_decay = 1e-4 #(float) weight decay
+    print_freq = 100 #(int) print frequency
+    layers = 100 #(int) number of layers
+    growth = 12 #(int) new channels per layer
+    droprate = 0.0 #(float) dropout probability
+    augment = False #(bool) whether to use standard augmentation
+    reduce = 0.5 #(float) compression rate in transition stage
+    bottleneck = False #(bool) whether to use bottleneck block
+    resume = '' #(string) path to latest checkpoint
+    name = 'DenseNet_BC_100_12' #(string) name of Experiment
+    datadir = '../data/' #(string) path to data
+    args = ConfigAsArgs({
+        "epochs": epochs,
+        "start_epoch": start_epoch,
+        "batch_size": batch_size,
+        "lr": lr,
+        "momentum": momentum,
+        "weight_decay": weight_decay,
+        "print_freq": print_freq,
+        "layers": layers,
+        "growth": growth,
+        "droprate": droprate,
+        "augment": augment,
+        "reduce": reduce,
+        "bottleneck": bottleneck,
+        "resume": resume,
+        "name": name,
+        "datadir": datadir
+    })
 
-def main():
-    global args, best_prec1
-    args = parser.parse_args()
-    if args.tensorboard: configure("runs/%s"%(args.name))
-    
+@ex.automain
+def main(args):
+    global best_prec1
+    best_prec1 = 0
+    # args = parser.parse_args()
+    # if args.tensorboard: configure("runs/%s"%(args.name))
+
     # Data loading code
     normalize = transforms.Normalize(mean=[x/255.0 for x in [125.3, 123.0, 113.9]],
                                      std=[x/255.0 for x in [63.0, 62.1, 66.7]])
-    
+
     if args.augment:
         transform_train = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
@@ -94,12 +100,12 @@ def main():
     # create model
     model = dn.DenseNet3(args.layers, 10, args.growth, reduction=args.reduce,
                          bottleneck=args.bottleneck, dropRate=args.droprate)
-    
+
     # get the number of model parameters
     print('Number of model parameters: {}'.format(
         sum([p.data.nelement() for p in model.parameters()])))
-    
-    # for training on multiple GPUs. 
+
+    # for training on multiple GPUs.
     # Use CUDA_VISIBLE_DEVICES=0,1 to specify which GPUs to use
     # model = torch.nn.DataParallel(model).cuda()
     model = model.cuda()
@@ -145,7 +151,8 @@ def main():
         }, is_best)
     print('Best accuracy: ', best_prec1)
 
-def train(train_loader, model, criterion, optimizer, epoch):
+@ex.capture
+def train(train_loader, model, criterion, optimizer, epoch, args):
     """Train for one epoch on the training set"""
     batch_time = AverageMeter()
     losses = AverageMeter()
@@ -187,11 +194,12 @@ def train(train_loader, model, criterion, optimizer, epoch):
                       epoch, i, len(train_loader), batch_time=batch_time,
                       loss=losses, top1=top1))
     # log to TensorBoard
-    if args.tensorboard:
-        log_value('train_loss', losses.avg, epoch)
-        log_value('train_acc', top1.avg, epoch)
+    # if args.tensorboard:
+    #    log_value('train_loss', losses.avg, epoch)
+    #    log_value('train_acc', top1.avg, epoch)
 
-def validate(val_loader, model, criterion, epoch):
+@ex.capture
+def validate(val_loader, model, criterion, epoch, args):
     """Perform validation on the validation set"""
     batch_time = AverageMeter()
     losses = AverageMeter()
@@ -230,13 +238,13 @@ def validate(val_loader, model, criterion, epoch):
 
     print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
     # log to TensorBoard
-    if args.tensorboard:
-        log_value('val_loss', losses.avg, epoch)
-        log_value('val_acc', top1.avg, epoch)
+    # if args.tensorboard:
+    #     log_value('val_loss', losses.avg, epoch)
+    #     log_value('val_acc', top1.avg, epoch)
     return top1.avg
 
-
-def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
+@ex.capture
+def save_checkpoint(state, is_best, args, filename='checkpoint.pth.tar'):
     """Saves checkpoint to disk"""
     directory = "runs/%s/"%(args.name)
     if not os.path.exists(directory):
@@ -263,13 +271,13 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-
-def adjust_learning_rate(optimizer, epoch):
+@ex.capture
+def adjust_learning_rate(optimizer, epoch, args):
     """Sets the learning rate to the initial LR decayed by 10 after 150 and 225 epochs"""
     lr = args.lr * (0.1 ** (epoch // 150)) * (0.1 ** (epoch // 225))
     # log to TensorBoard
-    if args.tensorboard:
-        log_value('learning_rate', lr, epoch)
+    # if args.tensorboard:
+    #    log_value('learning_rate', lr, epoch)
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
@@ -287,6 +295,3 @@ def accuracy(output, target, topk=(1,)):
         correct_k = correct[:k].view(-1).float().sum(0)
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
-
-if __name__ == '__main__':
-    main()

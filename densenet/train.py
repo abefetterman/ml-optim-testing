@@ -59,6 +59,7 @@ def config():
         "name": name,
         "datadir": datadir
     })
+    strict = {"args": args}
 
 @ex.automain
 def main(args):
@@ -151,7 +152,7 @@ def main(args):
         }, is_best)
     print('Best accuracy: ', best_prec1)
 
-@ex.capture
+@ex.capture(prefix='strict')
 def train(train_loader, model, criterion, optimizer, epoch, args):
     """Train for one epoch on the training set"""
     batch_time = AverageMeter()
@@ -198,7 +199,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     #    log_value('train_loss', losses.avg, epoch)
     #    log_value('train_acc', top1.avg, epoch)
 
-@ex.capture
+@ex.capture(prefix='strict')
 def validate(val_loader, model, criterion, epoch, args):
     """Perform validation on the validation set"""
     batch_time = AverageMeter()
@@ -243,7 +244,7 @@ def validate(val_loader, model, criterion, epoch, args):
     #     log_value('val_acc', top1.avg, epoch)
     return top1.avg
 
-@ex.capture
+@ex.capture(prefix='strict')
 def save_checkpoint(state, is_best, args, filename='checkpoint.pth.tar'):
     """Saves checkpoint to disk"""
     directory = "runs/%s/"%(args.name)
@@ -271,7 +272,7 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
-@ex.capture
+@ex.capture(prefix='strict')
 def adjust_learning_rate(optimizer, epoch, args):
     """Sets the learning rate to the initial LR decayed by 10 after 150 and 225 epochs"""
     lr = args.lr * (0.1 ** (epoch // 150)) * (0.1 ** (epoch // 225))

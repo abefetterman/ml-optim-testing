@@ -49,8 +49,8 @@ def create_model(layers, growth, reduction, bottleneck, droprate):
                     bottleneck=bottleneck, dropRate=droprate)
 
 @ex.capture
-def create_dataloader(datadir, batchsize, augment):
-    return Cifar10(datadir, batchsize, augment)
+def create_dataloader(datadir, batch_size, augment):
+    return Cifar10(datadir, batch_size, augment)
 
 @ex.capture
 def create_optimizer(model, lr, momentum, weight_decay):
@@ -64,6 +64,5 @@ def my_main(args):
     model = create_model()
     optimizer = create_optimizer(model)
     loader = create_dataloader()
-    method = Cifar10(model, optimizer, loader, args)
-    method.load()
+    method = Standard(model, optimizer, loader, args)
     method.run()

@@ -24,13 +24,13 @@ def config():
     layers = 100 #(int) number of layers
     growth = 12 #(int) new channels per layer
     droprate = 0.0 #(float) dropout probability
-    augment = False #(bool) whether to use standard augmentation
+    augment = True #(bool) whether to use standard augmentation
     reduction = 0.5 #(float) compression rate in transition stage
-    bottleneck = False #(bool) whether to use bottleneck block
+    bottleneck = True #(bool) whether to use bottleneck block
     resume = '' #(string) path to latest checkpoint
     name = 'DenseNet_BC_100_12' #(string) name of Experiment
     datadir = './data/' #(string) path to data
-    cuda = False
+    cuda = True
     args = ConfigAsArgs({
         "epochs": epochs,
         "start_epoch": start_epoch,

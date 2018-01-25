@@ -1,5 +1,7 @@
-from methods.cifar10 import Cifar10
+from methods.standard import Standard
 from models.densenet import DenseNet3
+from dataloaders.cifar10 import Cifar10
+
 import torch
 
 from utils import ConfigAsArgs
@@ -7,10 +9,6 @@ from sacred import Experiment
 ex = Experiment('DenseNet')
 # used for logging to TensorBoard
 # from tensorboard_logger import configure, log_value
-
-class ConfigAsArgs:
-    def __init__(self, entries):
-        self.__dict__.update(entries)
 
 @ex.config
 def config():
@@ -20,7 +18,7 @@ def config():
     lr = 0.1 #(float) initial learning rate
     momentum = 0.9 #(float) momentum
     weight_decay = 1e-4 #(float) weight decay
-    print_freq = 1 #(int) print frequency
+    print_freq = 100 #(int) print frequency
     layers = 100 #(int) number of layers
     growth = 12 #(int) new channels per layer
     droprate = 0.0 #(float) dropout probability
@@ -51,6 +49,10 @@ def create_model(layers, growth, reduction, bottleneck, droprate):
                     bottleneck=bottleneck, dropRate=droprate)
 
 @ex.capture
+def create_dataloader(datadir, batchsize, augment):
+    return Cifar10(datadir, batchsize, augment)
+
+@ex.capture
 def create_optimizer(model, lr, momentum, weight_decay):
     return torch.optim.SGD(model.parameters(), lr,
                                 momentum=momentum,
@@ -61,6 +63,7 @@ def create_optimizer(model, lr, momentum, weight_decay):
 def my_main(args):
     model = create_model()
     optimizer = create_optimizer(model)
-    method = Cifar10(model, optimizer, args)
+    loader = create_dataloader()
+    method = Cifar10(model, optimizer, loader, args)
     method.load()
     method.run()

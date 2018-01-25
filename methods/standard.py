@@ -12,11 +12,10 @@ import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
-import densenet as dn
-
-class Cifar10:
-    def __init__(self, model, optimizer, args):
+class Standard:
+    def __init__(self, model, optimizer, loader, args):
         self.optimizer=optimizer
+        self.loader=loader
         self.args=args
 
         # get the number of model parameters
@@ -31,49 +30,6 @@ class Cifar10:
         cudnn.benchmark = True
 
         self.best_prec1 = 0
-
-    def load(self):
-        args=self.args
-        normalize = transforms.Normalize(mean=[x/255.0 for x in [125.3, 123.0, 113.9]],
-                                         std=[x/255.0 for x in [63.0, 62.1, 66.7]])
-
-        if args.augment:
-            transform_train = transforms.Compose([
-                transforms.RandomCrop(32, padding=4),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                normalize,
-                ])
-        else:
-            transform_train = transforms.Compose([
-                transforms.ToTensor(),
-                normalize,
-                ])
-        transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            normalize
-            ])
-
-        kwargs = {'num_workers': 1, 'pin_memory': True}
-        self.train_loader = torch.utils.data.DataLoader(
-            datasets.CIFAR10(args.datadir, train=True, download=True,
-                             transform=transform_train),
-            batch_size=args.batch_size, shuffle=True, **kwargs)
-        self.val_loader = torch.utils.data.DataLoader(
-            datasets.CIFAR10(args.datadir, train=False, transform=transform_test),
-            batch_size=args.batch_size, shuffle=True, **kwargs)
-
-        if args.resume:
-            if os.path.isfile(args.resume):
-                print("=> loading checkpoint '{}'".format(args.resume))
-                checkpoint = torch.load(args.resume)
-                args.start_epoch = checkpoint['epoch']
-                best_prec1 = checkpoint['best_prec1']
-                model.load_state_dict(checkpoint['state_dict'])
-                print("=> loaded checkpoint '{}' (epoch {})"
-                      .format(args.resume, checkpoint['epoch']))
-            else:
-                print("=> no checkpoint found at '{}'".format(args.resume))
 
     def run(self):
         args = self.args
@@ -105,7 +61,7 @@ class Cifar10:
         self.model.train()
 
         end = time.time()
-        for i, (input, target) in enumerate(self.train_loader):
+        for i, (input, target) in enumerate(self.loader.train):
             #if (self.args.cuda):
             target = target.cuda(async=True)
             input = input.cuda()
@@ -135,7 +91,7 @@ class Cifar10:
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                       'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-                          epoch, i, len(self.train_loader), batch_time=batch_time,
+                          epoch, i, len(self.loader.train), batch_time=batch_time,
                           loss=losses, top1=top1))
 
     def validate(self, epoch):
@@ -148,7 +104,7 @@ class Cifar10:
         self.model.eval()
 
         end = time.time()
-        for i, (input, target) in enumerate(self.val_loader):
+        for i, (input, target) in enumerate(self.loader.test):
             #if (self.args.cuda):
             target = target.cuda(async=True)
             input = input.cuda()
@@ -173,7 +129,7 @@ class Cifar10:
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                       'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
-                          i, len(self.val_loader), batch_time=batch_time, loss=losses,
+                          i, len(self.loader.test), batch_time=batch_time, loss=losses,
                           top1=top1))
 
         print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))

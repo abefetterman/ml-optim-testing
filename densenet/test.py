@@ -1,1 +1,1 @@
-from ..tools import Struct
+from optim_testing.utils import ConfigAsArgs

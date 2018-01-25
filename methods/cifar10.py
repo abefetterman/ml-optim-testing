@@ -25,10 +25,10 @@ class Cifar10:
 
         self.model=model
         self.criterion = nn.CrossEntropyLoss()
-        if (args.cuda):
-            self.model = self.model.cuda()
-            self.criterion = self.criterion.cuda()
-            cudnn.benchmark = True
+        #if (args.cuda):
+        self.model = self.model.cuda()
+        self.criterion = self.criterion.cuda()
+        cudnn.benchmark = True
 
         self.best_prec1 = 0
 
@@ -54,7 +54,7 @@ class Cifar10:
             normalize
             ])
 
-        kwargs = {'num_workers': 1, 'pin_memory': self.args.cuda}
+        kwargs = {'num_workers': 1, 'pin_memory': True}
         self.train_loader = torch.utils.data.DataLoader(
             datasets.CIFAR10(args.datadir, train=True, download=True,
                              transform=transform_train),
@@ -106,9 +106,9 @@ class Cifar10:
 
         end = time.time()
         for i, (input, target) in enumerate(self.train_loader):
-            if (self.args.cuda):
-                target = target.cuda(async=True)
-                input = input.cuda()
+            #if (self.args.cuda):
+            target = target.cuda(async=True)
+            input = input.cuda()
             input_var = torch.autograd.Variable(input)
             target_var = torch.autograd.Variable(target)
 
@@ -149,9 +149,9 @@ class Cifar10:
 
         end = time.time()
         for i, (input, target) in enumerate(self.val_loader):
-            if (self.args.cuda):
-                target = target.cuda(async=True)
-                input = input.cuda()
+            #if (self.args.cuda):
+            target = target.cuda(async=True)
+            input = input.cuda()
             input_var = torch.autograd.Variable(input, volatile=True)
             target_var = torch.autograd.Variable(target, volatile=True)
 

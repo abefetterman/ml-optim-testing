@@ -37,7 +37,10 @@ def config():
     cuda = True
 
 @ex.capture
-def create_model(layers, growth, reduction, bottleneck, droprate, cuda):
+def create_model(layers, growth, reduction, bottleneck, droprate, cuda, _seed):
+    torch.manual_seed(_seed)
+    torch.cuda.manual_seed_all(_seed)
+
     model = DenseNet3(layers, 10, growth, reduction=reduction,
                     bottleneck=bottleneck, dropRate=droprate)
     print('Number of model parameters: {}'.format(
@@ -69,22 +72,35 @@ def create_tracker(print_freq):
     return DefaultTracker(get_accuracy=topk_accuracy, print_freq=print_freq)
 
 @ex.capture
+def create_scheduler(optimizer):
+    return torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[75,90], gamma=0.1)
+
+@ex.capture
 def log(epoch, name, value, _run):
     print('Epoch {0} {1} {2:.6f}'.format(epoch, name, value))
     _run.log_scalar(name, value, epoch)
 
 @ex.automain
-def main(cuda, start_epoch, epochs):
+def main(cuda, start_epoch, epochs, _seed):
     model = create_model()
     optimizer = create_optimizer(model)
+    scheduler = create_scheduler(optimizer)
     loader = create_dataloader()
     criterion = create_criterion()
     tracker = create_tracker()
+    best_accuracy = 0
+
+    torch.manual_seed(_seed)
+    torch.cuda.manual_seed_all(_seed)
     for epoch in range(start_epoch, epochs):
         print('===== EPOCH {} ====='.format(epoch))
+        scheduler.step()
         train(model, criterion, optimizer, loader.train, tracker=tracker, cuda=cuda)
         log(epoch, 'training.loss', tracker.avg_loss())
         log(epoch, 'training.accuracy', tracker.avg_accuracy())
         validate(model, criterion, loader.test, tracker=tracker, cuda=cuda)
         log(epoch, 'testing.loss', tracker.avg_loss())
         log(epoch, 'testing.accuracy', tracker.avg_accuracy())
+        best_accuracy = max(best_accuracy, tracker.avg_accuracy())
+
+    log(0, 'testing.best_accuracy', best_accuracy)

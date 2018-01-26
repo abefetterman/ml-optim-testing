@@ -11,4 +11,4 @@ def topk_accuracy(output, target, topk=(1,)):
     for k in topk:
         correct_k = correct[:k].view(-1).float().sum(0)
         res.append(correct_k.mul_(100.0 / batch_size))
-    return res[0]
+    return res[0][0]

@@ -78,9 +78,9 @@ def main(cuda, start_epoch, epochs):
     for epoch in range(start_epoch, epochs):
         print('===== EPOCH {} ====='.format(epoch))
         train(model, criterion, optimizer, loader.train, tracker=tracker, cuda=cuda)
-        print('Epoch {0} val. loss: {1:.6f}'.format(epoch, tracker.get_loss()))
-        print('Epoch {0} val. accuracy: {1:.3f}'.format(epoch, tracker.get_accuracy()))
+        print('Epoch {0} val. loss: {1:.6f}'.format(epoch, tracker.avg_loss()))
+        print('Epoch {0} val. accuracy: {1:.3f}'.format(epoch, tracker.avg_accuracy()))
         validate(model, criterion, loader.test, tracker=tracker, cuda=cuda)
-        print('Epoch {0} test loss: {1:.6f}'.format(epoch, tracker.get_loss()))
-        print('Epoch {0} test accuracy: {1:.3f}'.format(epoch, tracker.get_accuracy()))
+        print('Epoch {0} test loss: {1:.6f}'.format(epoch, tracker.avg_loss()))
+        print('Epoch {0} test accuracy: {1:.3f}'.format(epoch, tracker.avg_accuracy()))
         

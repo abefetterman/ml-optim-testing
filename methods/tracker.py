@@ -31,7 +31,7 @@ class DefaultTracker(object):
     def update(self, i, output, target, loss, size):
         self.losses.update(loss, size)
         if (self.get_accuracy):
-            new_accuracy = get_accuracy(output.data, target)
+            new_accuracy = self.get_accuracy(output, target)
             self.accuracy.update(new_accuracy, size)
 
         self.batch_time.update(time.time() - self.end)
@@ -40,10 +40,11 @@ class DefaultTracker(object):
         if i % self.print_freq == 0:
             print('[{0}/{1}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
+                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+		  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'.format(
                       i, self.batch_size, batch_time=self.batch_time,
-                      loss=self.losses))
-    def get_loss(self):
+                      loss=self.losses, top1=self.accuracy))
+    def avg_loss(self):
         return self.losses.avg
-    def get_accuracy(self):
+    def avg_accuracy(self):
         return self.accuracy.avg

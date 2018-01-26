@@ -1,5 +1,5 @@
 import torch
-from tracker import DefaultTracker
+from methods.tracker import DefaultTracker
 
 default_tracker = DefaultTracker()
 

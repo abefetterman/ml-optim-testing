@@ -1,6 +1,7 @@
 from methods.standard import Standard
 from models.densenet import DenseNet3
 from dataloaders.cifar10 import Cifar10
+from hybrid import Hybrid
 
 import torch
 
@@ -16,6 +17,9 @@ def config():
     start_epoch = 0 #(int) manual epoch number (useful on restarts)
     batch_size = 64 #(int) mini-batch size
     lr = 0.1 #(float) initial learning rate
+    rho_adam = 0.01 #(float) fraction of learning rate for pure adam
+    etam = 0.0 #(float) fraction of magnitude from adam
+    etad = 1.0 #(float) fraction of direction from adam
     momentum = 0.9 #(float) momentum
     weight_decay = 1e-4 #(float) weight decay
     print_freq = 100 #(int) print frequency
@@ -25,7 +29,7 @@ def config():
     augment = True #(bool) whether to use standard augmentation
     reduction = 0.5 #(float) compression rate in transition stage
     bottleneck = True #(bool) whether to use bottleneck block
-    name = 'DenseNet_BC_100_12' #(string) name of Experiment
+    name = 'DenseNet' #(string) name of Experiment
     datadir = './data/' #(string) path to data
     cuda = True
     args = ConfigAsArgs({
@@ -48,9 +52,9 @@ def create_dataloader(datadir, batch_size, augment):
     return Cifar10(datadir, batch_size, augment)
 
 @ex.capture
-def create_optimizer(model, lr, momentum, weight_decay):
-    return torch.optim.SGD(model.parameters(), lr,
-                                momentum=momentum,
+def create_optimizer(model, lr, rho_adam, etam, etad, weight_decay):
+    return Hybrid(model.parameters(), lr,
+                                etam=etam, etad=etad, rho_adam=rho_adam
                                 nesterov=True,
                                 weight_decay=weight_decay)
 

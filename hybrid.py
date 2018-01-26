@@ -5,11 +5,12 @@ import numpy as np
 
 class Hybrid(Optimizer):
 
-    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, eta=1.0, etam=0.0,
+    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
+                 etad=1.0, etam=0.0, rho_adam=0.01,
                  weight_decay=0, amsgrad=False, nesterov=True):
-        defaults = dict(lr=lr, betas=betas, eps=eps, eta=eta,
+        defaults = dict(lr=lr, betas=betas, eps=eps, etad=etad,
                         weight_decay=weight_decay, amsgrad=amsgrad,
-                        nesterov=nesterov, etam=etam)
+                        nesterov=nesterov, etam=etam, rho_adam=rho_adam)
         super(Hybrid, self).__init__(params, defaults)
 
     def step(self, closure=None):
@@ -72,8 +73,9 @@ class Hybrid(Optimizer):
 
                 step_mag = group['lr']*((group['etam'] * adam_step_norm) \
                              + ((1-group['etam']) * sgd_step_norm))
-                adam_step = step_mag*group['eta']/(adam_step_norm + group['eps'])
-                sgd_step = step_mag*(1-group['eta'])/(sgd_step_norm + group['eps'])
+                adam_step = step_mag*group['etad']*group['rho_adam'] \
+                            /(adam_step_norm + group['eps'])
+                sgd_step = step_mag*(1-group['etad'])/(sgd_step_norm + group['eps'])
 
                 wd = group['weight_decay']*group['lr']
 

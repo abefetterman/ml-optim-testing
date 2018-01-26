@@ -19,7 +19,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 class DefaultTracker(object):
-    def __init__(self, batch_size, get_accuracy=None, print_freq=100):
+    def __init__(self, get_accuracy=None, print_freq=100):
         self.get_accuracy=get_accuracy
         self.print_freq = print_freq
         self.reset()

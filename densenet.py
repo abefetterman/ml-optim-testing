@@ -1,4 +1,6 @@
-from methods.train import train
+from methods.tracker import DefaultTracker
+from methods.accuracy import topk_accuracy
+from methods.standard import train, validate
 from models.densenet import DenseNet3
 from dataloaders.cifar10 import Cifar10
 from hybrid import Hybrid
@@ -33,15 +35,6 @@ def config():
     name = 'DenseNet' #(string) name of Experiment
     datadir = './data/' #(string) path to data
     cuda = True
-    args = ConfigAsArgs({
-        "epochs": epochs,
-        "start_epoch": start_epoch,
-        "lr": lr,
-        "print_freq": print_freq,
-        "name": name,
-        "cuda": cuda
-    })
-    strict = {"args": args}
 
 @ex.capture
 def create_model(layers, growth, reduction, bottleneck, droprate, cuda):
@@ -71,11 +64,23 @@ def create_criterion(cuda):
         criterion=criterion.cuda()
     return criterion
 
+@ex.capture
+def create_tracker(print_freq):
+    return DefaultTracker(get_accuracy=topk_accuracy, print_freq=print_freq)
+
 @ex.automain
-def my_main(args, cuda):
+def main(cuda, start_epoch, epochs):
     model = create_model()
     optimizer = create_optimizer(model)
     loader = create_dataloader()
     criterion = create_criterion()
-    for epoch in range(args.start_epoch, args.epochs):
-        train(model, criterion, optimizer, loader.train, cuda=cuda)
+    tracker = create_tracker()
+    for epoch in range(start_epoch, epochs):
+        print('===== EPOCH {} ====='.format(epoch))
+        train(model, criterion, optimizer, loader.train, tracker=tracker, cuda=cuda)
+        print('Epoch {0} val. loss: {1:.6f}'.format(epoch, tracker.get_loss()))
+        print('Epoch {0} val. accuracy: {1:.3f}'.format(epoch, tracker.get_accuracy()))
+        validate(model, criterion, loader.test, tracker=tracker, cuda=cuda)
+        print('Epoch {0} test loss: {1:.6f}'.format(epoch, tracker.get_loss()))
+        print('Epoch {0} test accuracy: {1:.3f}'.format(epoch, tracker.get_accuracy()))
+        

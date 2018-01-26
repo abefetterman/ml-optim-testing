@@ -1,6 +1,4 @@
-
 import time
-import torch
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -45,30 +43,7 @@ class DefaultTracker(object):
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
                       i, self.batch_size, batch_time=self.batch_time,
                       loss=self.losses))
-
-
-def train(model, criterion, optimizer, train_loader, \
-            cuda=True, tracker=DefaultTracker()):
-    # switch to train mode
-    model.train()
-    if (tracker):
-        tracker.reset(len(train_loader))
-
-    for i, (input, target) in enumerate(train_loader):
-        if (cuda):
-            target = target.cuda(async=True)
-            input = input.cuda()
-        input_var = torch.autograd.Variable(input)
-        target_var = torch.autograd.Variable(target)
-
-        # compute output
-        output = model(input_var)
-        loss = criterion(output, target_var)
-
-        # compute gradient and do SGD step
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        if (tracker):
-            tracker.update(i, output.data, target, loss.data[0], input.size(0))
+    def get_loss(self):
+        return self.losses.avg
+    def get_accuracy(self):
+        return self.accuracy.avg

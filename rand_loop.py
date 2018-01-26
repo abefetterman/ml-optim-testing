@@ -5,7 +5,7 @@ try:
     while True:
         etam=random.uniform(0,1)
         etad=random.uniform(0,1)
-        weight_decay=10 ** (0.8*etam + 0.5*random.uniform(0,0.5) - 4.0)
+        weight_decay=10 ** (0.8*etad + 0.5*random.uniform(0,0.5) - 4.0)
         ex.run(config_updates={
             "etam":etam,
             "etad":etad,

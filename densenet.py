@@ -68,6 +68,11 @@ def create_criterion(cuda):
 def create_tracker(print_freq):
     return DefaultTracker(get_accuracy=topk_accuracy, print_freq=print_freq)
 
+@ex.capture
+def log(epoch, name, value, _run):
+    print('Epoch {0} {1} {2:.6f}'.format(epoch, name, value))
+    _run.log_scalar(name, value, epoch)
+
 @ex.automain
 def main(cuda, start_epoch, epochs):
     model = create_model()
@@ -78,9 +83,8 @@ def main(cuda, start_epoch, epochs):
     for epoch in range(start_epoch, epochs):
         print('===== EPOCH {} ====='.format(epoch))
         train(model, criterion, optimizer, loader.train, tracker=tracker, cuda=cuda)
-        print('Epoch {0} val. loss: {1:.6f}'.format(epoch, tracker.avg_loss()))
-        print('Epoch {0} val. accuracy: {1:.3f}'.format(epoch, tracker.avg_accuracy()))
+        log(epoch, 'training.loss', tracker.avg_loss())
+        log(epoch, 'training.accuracy', tracker.avg_accuracy())
         validate(model, criterion, loader.test, tracker=tracker, cuda=cuda)
-        print('Epoch {0} test loss: {1:.6f}'.format(epoch, tracker.avg_loss()))
-        print('Epoch {0} test accuracy: {1:.3f}'.format(epoch, tracker.avg_accuracy()))
-        
+        log(epoch, 'testing.loss', tracker.avg_loss())
+        log(epoch, 'testing.accuracy', tracker.avg_accuracy())

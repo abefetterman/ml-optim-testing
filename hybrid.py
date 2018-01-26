@@ -71,9 +71,9 @@ class Hybrid(Optimizer):
                 sgd_step_norm=torch.sum(exp_avg*exp_avg)
                 adam_step_norm=torch.sum(torch.div(exp_avg*exp_avg,denom))
 
-                step_mag = group['lr']*((group['etam'] * adam_step_norm) \
+                step_mag = group['lr']*((group['etam'] * adam_step_norm) * group['rho_adam']\
                              + ((1-group['etam']) * sgd_step_norm))
-                adam_step = step_mag*group['etad']*group['rho_adam'] \
+                adam_step = step_mag*group['etad'] \
                             /(adam_step_norm + group['eps'])
                 sgd_step = step_mag*(1-group['etad'])/(sgd_step_norm + group['eps'])
 

@@ -4,7 +4,7 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
 class Cifar10:
-    def __init__(self, datadir, batch_size, augment):
+    def __init__(self, datadir, batch_size, augment, cuda=True):
         normalize = transforms.Normalize(mean=[x/255.0 for x in [125.3, 123.0, 113.9]],
                                          std=[x/255.0 for x in [63.0, 62.1, 66.7]])
 
@@ -25,7 +25,10 @@ class Cifar10:
             normalize
             ])
 
-        kwargs = {'num_workers': 1, 'pin_memory': True}
+        kwargs = {}
+        if (cuda):
+            kwargs = {'num_workers': 1, 'pin_memory': True}
+
         self.train = torch.utils.data.DataLoader(
             datasets.CIFAR10(datadir, train=True, download=True,
                              transform=transform_train),

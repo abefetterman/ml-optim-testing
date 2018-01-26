@@ -1,9 +1,10 @@
-from methods.standard import Standard
+from methods.train import train
 from models.densenet import DenseNet3
 from dataloaders.cifar10 import Cifar10
 from hybrid import Hybrid
 
 import torch
+import torch.nn as nn
 
 from utils import ConfigAsArgs
 from sacred import Experiment
@@ -13,7 +14,7 @@ add_observer(ex)
 
 @ex.config
 def config():
-    epochs = 300 #(int) number of total epochs to run
+    epochs = 100 #(int) number of total epochs to run
     start_epoch = 0 #(int) manual epoch number (useful on restarts)
     batch_size = 64 #(int) mini-batch size
     lr = 0.1 #(float) initial learning rate
@@ -43,13 +44,18 @@ def config():
     strict = {"args": args}
 
 @ex.capture
-def create_model(layers, growth, reduction, bottleneck, droprate):
-    return DenseNet3(layers, 10, growth, reduction=reduction,
+def create_model(layers, growth, reduction, bottleneck, droprate, cuda):
+    model = DenseNet3(layers, 10, growth, reduction=reduction,
                     bottleneck=bottleneck, dropRate=droprate)
+    print('Number of model parameters: {}'.format(
+        sum([p.data.nelement() for p in model.parameters()])))
+    if (cuda):
+        model = model.cuda()
+    return model
 
 @ex.capture
-def create_dataloader(datadir, batch_size, augment):
-    return Cifar10(datadir, batch_size, augment)
+def create_dataloader(datadir, batch_size, augment, cuda):
+    return Cifar10(datadir, batch_size, augment, cuda=cuda)
 
 @ex.capture
 def create_optimizer(model, lr, rho_adam, etam, etad, weight_decay):
@@ -58,10 +64,18 @@ def create_optimizer(model, lr, rho_adam, etam, etad, weight_decay):
                                 nesterov=True,
                                 weight_decay=weight_decay)
 
+@ex.capture
+def create_criterion(cuda):
+    criterion = nn.CrossEntropyLoss()
+    if (cuda):
+        criterion=criterion.cuda()
+    return criterion
+
 @ex.automain
-def my_main(args):
+def my_main(args, cuda):
     model = create_model()
     optimizer = create_optimizer(model)
     loader = create_dataloader()
-    method = Standard(model, optimizer, loader, args)
-    method.run()
+    criterion = create_criterion()
+    for epoch in range(args.start_epoch, args.epochs):
+        train(model, criterion, optimizer, loader.train, cuda=cuda)

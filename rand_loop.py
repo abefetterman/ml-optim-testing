@@ -11,3 +11,5 @@ try:
             "etad":etad,
             "weight_decay":weight_decay
         })
+except KeyboardInterrupt:
+    print('Interrupted!')

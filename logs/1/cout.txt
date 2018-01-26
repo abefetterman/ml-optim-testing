@@ -1,0 +1,2 @@
+INFO - DenseNet - Running command 'my_main'
+INFO - DenseNet - Started run with ID "1"

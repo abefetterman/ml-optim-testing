@@ -6,9 +6,9 @@ import torch
 
 from utils import ConfigAsArgs
 from sacred import Experiment
-from observer import add_observer
 ex = Experiment('DenseNet')
-add_observer(ex)
+# used for logging to TensorBoard
+# from tensorboard_logger import configure, log_value
 
 @ex.config
 def config():
@@ -25,15 +25,20 @@ def config():
     augment = True #(bool) whether to use standard augmentation
     reduction = 0.5 #(float) compression rate in transition stage
     bottleneck = True #(bool) whether to use bottleneck block
+    resume = '' #(string) path to latest checkpoint
     name = 'DenseNet_BC_100_12' #(string) name of Experiment
     datadir = './data/' #(string) path to data
     cuda = True
     args = ConfigAsArgs({
         "epochs": epochs,
         "start_epoch": start_epoch,
+        "batch_size": batch_size,
         "lr": lr,
         "print_freq": print_freq,
+        "augment": augment,
+        "resume": resume,
         "name": name,
+        "datadir": datadir,
         "cuda": cuda
     })
     strict = {"args": args}

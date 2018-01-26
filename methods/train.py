@@ -19,15 +19,16 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 class DefaultTracker(object):
-    def __init__(self, get_accuracy=None, print_freq=100):
+    def __init__(self, batch_size, get_accuracy=None, print_freq=100):
         self.get_accuracy=get_accuracy
         self.print_freq = print_freq
         self.reset()
-    def reset(self):
+    def reset(self, batch_size=0):
         self.batch_time = AverageMeter()
         self.losses = AverageMeter()
         self.accuracy = AverageMeter()
 
+        self.batch_size = batch_size
         self.end = time.time()
     def update(self, i, output, target, loss, size):
         self.losses.update(loss, size)
@@ -42,7 +43,7 @@ class DefaultTracker(object):
             print('[{0}/{1}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
-                      i, size, batch_time=self.batch_time,
+                      i, self.batch_size, batch_time=self.batch_time,
                       loss=self.losses))
 
 
@@ -51,7 +52,7 @@ def train(model, criterion, optimizer, train_loader, \
     # switch to train mode
     model.train()
     if (tracker):
-        tracker.reset()
+        tracker.reset(len(train_loader))
 
     for i, (input, target) in enumerate(train_loader):
         if (cuda):

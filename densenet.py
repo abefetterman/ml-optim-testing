@@ -54,7 +54,7 @@ def create_dataloader(datadir, batch_size, augment):
 @ex.capture
 def create_optimizer(model, lr, rho_adam, etam, etad, weight_decay):
     return Hybrid(model.parameters(), lr,
-                                etam=etam, etad=etad, rho_adam=rho_adam
+                                etam=etam, etad=etad, rho_adam=rho_adam,
                                 nesterov=True,
                                 weight_decay=weight_decay)
 

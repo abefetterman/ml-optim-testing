@@ -81,7 +81,7 @@ def log(epoch, name, value, _run):
     _run.log_scalar(name, value, epoch)
 
 @ex.automain
-def main(cuda, start_epoch, epochs, _seed):
+def main(cuda, start_epoch, epochs, _seed, _run):
     model = create_model()
     optimizer = create_optimizer(model)
     scheduler = create_scheduler(optimizer)
@@ -100,7 +100,10 @@ def main(cuda, start_epoch, epochs, _seed):
         log(epoch, 'training.accuracy', tracker.avg_accuracy())
         validate(model, criterion, loader.test, tracker=tracker, cuda=cuda)
         log(epoch, 'testing.loss', tracker.avg_loss())
-        log(epoch, 'testing.accuracy', tracker.avg_accuracy())
-        best_accuracy = max(best_accuracy, tracker.avg_accuracy())
-
+        testing_accuracy = tracker.avg_accuracy()
+        log(epoch, 'testing.accuracy', testing_accuracy)
+        best_accuracy = max(best_accuracy, testing_accuracy)
+        _run.result = testing_accuracy
+        
     log(0, 'testing.best_accuracy', best_accuracy)
+    return best_accuracy

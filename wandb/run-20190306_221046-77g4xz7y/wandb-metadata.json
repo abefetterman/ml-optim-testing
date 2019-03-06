@@ -1,0 +1,21 @@
+{
+    "root": "/Users/abe/Documents/optim_testing",
+    "git": {
+        "remote": "https://github.com/abefetterman/optim_testing",
+        "commit": "1356daade6c0ea582aa3d6b9272d06c34779e480"
+    },
+    "email": "abe@nomiku.com",
+    "startedAt": "2019-03-06T22:10:46.837121",
+    "host": "Abes-MacBook-Pro.local",
+    "username": "abe",
+    "os": "Darwin-17.7.0-x86_64-i386-64bit",
+    "python": "3.6.5",
+    "cpu_count": 4,
+    "program": "cifar.py",
+    "args": [],
+    "state": "killed",
+    "heartbeatAt": "2019-03-06T22:10:54.699616",
+    "jobType": null,
+    "mode": "run",
+    "exitcode": 255
+}

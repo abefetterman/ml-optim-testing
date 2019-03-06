@@ -67,8 +67,8 @@ model = models.resnet50(pretrained=False)
 #     param.requires_grad = False
     
 # the new classifier will have requires_grad=True as default
-num_features = model.classifier.in_features
-model.classifier = nn.Linear(num_features, num_classes)
+num_features = model.fc.in_features
+model.fc = nn.Linear(num_features, num_classes)
 
 model = model.to(device)
 

@@ -57,7 +57,7 @@ dataloader_val = torch.utils.data.DataLoader(
     sampler=valid_sampler
     )
 
-model = models.densenet121(pretrained=False)
+model = models.resnet50(pretrained=False)
 
 # freeze all original params
 # for param in model.parameters():
@@ -70,7 +70,8 @@ model.classifier = nn.Linear(num_features, num_classes)
 model = model.to(device)
 
 params_to_train = [param for param in model.parameters() if param.requires_grad==True]
-optimizer = SmoothAdam(params_to_train, lr=0.001, eta=2.0)
+# optimizer = SmoothAdam(params_to_train, lr=0.001, eta=2.0)
+optimizer = optim.SGD(params_to_train, lr=1e-3, momentum=0.9)
 
 criterion = nn.CrossEntropyLoss()
 

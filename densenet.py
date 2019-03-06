@@ -34,7 +34,7 @@ def config():
     bottleneck = True #(bool) whether to use bottleneck block
     name = 'DenseNet' #(string) name of Experiment
     datadir = './data/' #(string) path to data
-    cuda = True
+    cuda = False
 
 @ex.capture
 def create_model(layers, growth, reduction, bottleneck, droprate, cuda, _seed):

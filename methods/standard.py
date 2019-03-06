@@ -27,7 +27,7 @@ def train(model, criterion, optimizer, train_loader, \
         optimizer.step()
 
         if (tracker):
-            tracker.update(i, output.data, target, loss.data[0], input.size(0))
+            tracker.update(i, output.data, target, loss.item(), input.size(0))
 
 def validate(model, criterion, val_loader, \
             cuda=True, tracker=default_tracker):

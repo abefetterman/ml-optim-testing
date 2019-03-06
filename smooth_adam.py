@@ -16,10 +16,10 @@ class SmoothAdam(Optimizer):
 
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
                  eta=2.0, weight_decay=0, nesterov=True):
-        defaults = dict(lr=lr, betas=betas, eps=eps, etad=etad,
+        defaults = dict(lr=lr, betas=betas, eps=eps, eta=eta,
                         weight_decay=weight_decay, 
-                        nesterov=nesterov, etam=etam, rho_adam=rho_adam)
-        super(Hybrid, self).__init__(params, defaults)
+                        nesterov=nesterov)
+        super(SmoothAdam, self).__init__(params, defaults)
 
     def step(self, closure=None):
         """Performs a single optimization step.

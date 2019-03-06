@@ -12,6 +12,9 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 from smooth_adam import SmoothAdam
 
+import wandb
+wandb.init(project="optim_testing")
+
 num_classes = 100
 batch_size_train, batch_size_test = 8, 32
 num_epochs = 150
@@ -69,6 +72,8 @@ model.classifier = nn.Linear(num_features, num_classes)
 
 model = model.to(device)
 
+wandb.watch(model)
+
 params_to_train = [param for param in model.parameters() if param.requires_grad==True]
 # optimizer = SmoothAdam(params_to_train, lr=0.001, eta=2.0)
 optimizer = optim.SGD(params_to_train, lr=1e-3, momentum=0.9)
@@ -117,4 +122,10 @@ for epoch in range(num_epochs):
     print('Train loss: {:.4f}, acc: {:.4f};\t Val loss: {:.4f} acc: {:.4f}'.format(
         train_loss, train_correct, val_loss, val_correct
     ))
+    wandb.log({
+        'Train Loss': train_loss,
+        'Train Accuracy': train_correct,
+        'Validation Loss': val_loss,
+        'Validation Accuracy': val_correct,
+    })
     

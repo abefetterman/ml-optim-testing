@@ -11,11 +11,12 @@ from tqdm import tqdm
 from torch.utils.data.sampler import SubsetRandomSampler
 
 from smooth_adam import SmoothAdam
+from wrn import WideResNet
 
 import wandb
 wandb.init(project="optim_testing")
 
-num_classes = 100
+num_classes = 10
 batch_size_train, batch_size_test = 8, 32
 num_epochs = 150
 input_size = 224
@@ -60,15 +61,7 @@ dataloader_val = torch.utils.data.DataLoader(
     sampler=valid_sampler
     )
 
-model = models.resnet50(pretrained=False)
-
-# freeze all original params
-# for param in model.parameters():
-#     param.requires_grad = False
-    
-# the new classifier will have requires_grad=True as default
-num_features = model.fc.in_features
-model.fc = nn.Linear(num_features, num_classes)
+model = WideResNet(n_groups=3, N=3, n_classes=num_classes, k=6)
 
 model = model.to(device)
 
@@ -76,7 +69,7 @@ wandb.watch(model)
 
 params_to_train = [param for param in model.parameters() if param.requires_grad==True]
 # optimizer = SmoothAdam(params_to_train, lr=0.001, eta=2.0)
-optimizer = optim.SGD(params_to_train, lr=1e-3, momentum=0.9)
+optimizer = optim.SGD(params_to_train, lr=0.1, momentum=0.9)
 
 criterion = nn.CrossEntropyLoss()
 
@@ -98,8 +91,8 @@ for epoch in range(num_epochs):
         train_correct += torch.sum(preds == labels.data)
         # print('loss {} / correct {}'.format(loss.item(),torch.sum(preds == labels.data).double()/inputs.size(0)))
     
-    train_loss = train_loss / len(dataloader_train.dataset)
-    train_correct = train_correct.double() / len(dataloader_train.dataset)
+    train_loss = train_loss / len(train_idx)
+    train_correct = train_correct.double() / len(train_idx)
     
     model.eval()
     val_loss = 0.0
@@ -116,8 +109,8 @@ for epoch in range(num_epochs):
             val_correct += torch.sum(preds == labels.data)
             # print('loss {} / correct {}'.format(loss.item(),torch.sum(preds == labels.data).double()/inputs.size(0)))
     
-    val_loss = val_loss / len(dataloader_val.dataset)
-    val_correct = val_correct.double() / len(dataloader_val.dataset)
+    val_loss = val_loss / len(valid_idx)
+    val_correct = val_correct.double() / len(valid_idx)
     
     print('Train loss: {:.4f}, acc: {:.4f};\t Val loss: {:.4f} acc: {:.4f}'.format(
         train_loss, train_correct, val_loss, val_correct

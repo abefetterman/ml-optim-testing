@@ -17,23 +17,19 @@ import wandb
 wandb.init(project="optim_testing")
 
 num_classes = 10
-batch_size_train, batch_size_test = 8, 32
+batch_size_train, batch_size_test = 128, 128
 num_epochs = 150
-input_size = 224
 valid_size = 0.2
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 train_transforms = transforms.Compose([
-    transforms.RandomResizedCrop(input_size),
     transforms.RandomHorizontalFlip(),
     transforms.ColorJitter(),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 test_transforms = transforms.Compose([
-    transforms.Resize(input_size),
-    transforms.CenterCrop(input_size),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
@@ -69,7 +65,7 @@ wandb.watch(model)
 
 params_to_train = [param for param in model.parameters() if param.requires_grad==True]
 # optimizer = SmoothAdam(params_to_train, lr=0.001, eta=2.0)
-optimizer = optim.SGD(params_to_train, lr=0.1, momentum=0.9)
+optimizer = optim.SGD(params_to_train, lr=0.2, momentum=0.95)
 
 criterion = nn.CrossEntropyLoss()
 
